@@ -19,7 +19,7 @@ client.on('ready', () => {
 });
 
 client.on('message', msg => {
-  if (msg.content.lower() === '!verify') {
+  if (msg.content.toLowerCase() === '!verify') {
     sql_pool.query('SELECT * FROM discord_users WHERE discord_id = ?', [msg.member.id], (err, res) => {
         if (err) {
             msg.reply('Error connecting to the database!');
@@ -39,7 +39,7 @@ client.on('message', msg => {
         }
     });
   }
-  else if (msg.content.lower().startsWith('!unlink')) {
+  else if (msg.content.toLowerCase().startsWith('!unlink')) {
       if(!admins.includes(msg.member.id)) {
         msg.reply('You don\'t have permission to unlink accounts!');
       } else if (msg.content.split(' ').length === 1) {
@@ -72,7 +72,7 @@ client.on('message', msg => {
         });
       }
   }
-  else if (msg.content.lower().startsWith('!verify-ban')) {
+  else if (msg.content.toLowerCase().startsWith('!verify-ban')) {
     if(!admins.includes(msg.member.id)) {
       msg.reply('You don\'t have permission to ban accounts!');
     } else if (msg.content.split(' ').length === 1) {
@@ -105,7 +105,7 @@ client.on('message', msg => {
       });
     }
     }
-    else if (msg.content.lower().startsWith('!verify-unban')) {
+    else if (msg.content.toLowerCase().startsWith('!verify-unban')) {
         if(!admins.includes(msg.member.id)) {
           msg.reply('You don\'t have permission to unban accounts!');
         } else if (msg.content.split(' ').length === 1) {
@@ -138,7 +138,7 @@ client.on('message', msg => {
           });
         }
     }
-    else if (msg.content.lower().startsWith('!verify-printhelp')) {
+    else if (msg.content.toLowerCase().startsWith('!verify-instructions')) {
         msg.delete().then().catch(console.error);
         let embed = new MessageEmbed()
             .setTitle('What is UIUC-Verify?')
