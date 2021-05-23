@@ -11,15 +11,15 @@ const sql_pool = mysql.createPool({
 	database: process.env.DB_NAME
 });
 
-const Discord = require('discord.js');
-const client = new Discord.Client();
+const { Client, MessageEmbed } = require('discord.js');
+const client = new Client();
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
 client.on('message', msg => {
-  if (msg.content === '!verify') {
+  if (msg.content.lower() === '!verify') {
     sql_pool.query('SELECT * FROM discord_users WHERE discord_id = ?', [msg.member.id], (err, res) => {
         if (err) {
             msg.reply('Error connecting to the database!');
@@ -31,7 +31,7 @@ client.on('message', msg => {
         } else {
             const verifiedRole = msg.guild.roles.cache.find(role => role.name === 'uiuc-verified');
             if(verifiedRole) {
-                msg.member.roles.add(verifiedRole);
+                msg.member.roles.add(verifiedRole).then().catch(console.error);
                 msg.reply('Verified role has been added to your account.');
             } else {
                 msg.reply('Could not find verified role! Please make a role called `uiuc-verified`.');
@@ -39,7 +39,7 @@ client.on('message', msg => {
         }
     });
   }
-  else if (msg.content.startsWith('!unlink')) {
+  else if (msg.content.lower().startsWith('!unlink')) {
       if(!admins.includes(msg.member.id)) {
         msg.reply('You don\'t have permission to unlink accounts!');
       } else if (msg.content.split(' ').length === 1) {
@@ -62,8 +62,8 @@ client.on('message', msg => {
                         client.guilds.cache.forEach(guild => {
                             guild.members.fetch(discord_id).then((member) => {
                                 const verifiedRole = guild.roles.cache.find(role => role.name === 'uiuc-verified');
-                                if(verifiedRole) member.roles.remove(verifiedRole);
-                            }).catch(console.log);
+                                if(verifiedRole) member.roles.remove(verifiedRole).then().catch(console.error);
+                            }).catch(console.error);
                             msg.reply('Successfully unlinked Discord user ' + discord_id);
                         });
                     }
@@ -72,7 +72,7 @@ client.on('message', msg => {
         });
       }
   }
-  else if (msg.content.startsWith('!verify-ban')) {
+  else if (msg.content.lower().startsWith('!verify-ban')) {
     if(!admins.includes(msg.member.id)) {
       msg.reply('You don\'t have permission to ban accounts!');
     } else if (msg.content.split(' ').length === 1) {
@@ -105,7 +105,7 @@ client.on('message', msg => {
       });
     }
     }
-    else if (msg.content.startsWith('!verify-unban')) {
+    else if (msg.content.lower().startsWith('!verify-unban')) {
         if(!admins.includes(msg.member.id)) {
           msg.reply('You don\'t have permission to unban accounts!');
         } else if (msg.content.split(' ').length === 1) {
@@ -137,7 +137,35 @@ client.on('message', msg => {
               }
           });
         }
-    }    
+    }
+    else if (msg.content.lower().startsWith('!verify-printhelp')) {
+        msg.delete().then().catch(console.error);
+        let embed = new MessageEmbed()
+            .setTitle('What is UIUC-Verify?')
+            .setColor(0xE84A27)
+            .setDescription('UIUC-Verify is a bot that verifies Discord accounts belong\
+             to students of the University of Illinois at Urbana-Champaign')
+             .setAuthor('UIUC Verify', 'https://marketing.illinois.edu/images/brand/design/logo/block-i-blue-background.png', 
+             'https://github.com/CaptnSisko/uiucverify')
+             .setFooter('UIUC-Verify written by Captain_Sisko');
+        
+        embed.addField('How to verify your UIUC account for the first time',
+        '1) Visit https://uiucverify.twong.dev/\n\
+        2) Follow the directions on the website to log into Microsoft and Discord so the bot can link your accounts\n\
+        3) Run `!verify` in a channel @UIUC-Verify can see', false);
+        
+        embed.addField('How to get verified after your first time',
+        '1) Run `!verify` in a channel @UIUC-Verify can see. The bot will remember you verified accounts even across servers',
+        false);
+
+        embed.addField('Rules',
+        '1) You may only link one Discord account to your Netid. The bot enforces this 1:1 relation.\n\
+        2) Netid <-> Discord links are permanent. If you lose access to your Discord account and need to have it unlinked, contact a maintainer for assistance\n\
+        3) Threats, hate speech, or other egregious rule violations may result in a permanent ban from verifying your account',
+        false);
+
+        msg.channel.send(embed);
+    }        
 });
 
 client.login(process.env.DISCORD_BOT_TOKEN);
