@@ -143,8 +143,9 @@ client.on('message', msg => {
         let embed = new MessageEmbed()
             .setTitle('What is UIUC-Verify?')
             .setColor(0xE84A27)
-            .setDescription('UIUC-Verify is a bot that verifies Discord accounts belong\
-             to students of the University of Illinois at Urbana-Champaign')
+            .setDescription('UIUC-Verify is an open-source bot that verifies Discord accounts belong\
+             to students of the University of Illinois at Urbana-Champaign. You may view the\
+             source code at https://github.com/CaptnSisko/uiucverify')
              .setAuthor('UIUC Verify', 'https://marketing.illinois.edu/images/brand/design/logo/block-i-blue-background.png', 
              'https://github.com/CaptnSisko/uiucverify')
              .setFooter('UIUC-Verify written by Captain_Sisko');
