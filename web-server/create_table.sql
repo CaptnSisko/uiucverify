@@ -1,0 +1,1 @@
+CREATE TABLE `discord_users` ( `discord_id` VARCHAR(128) NOT NULL UNIQUE, `ms_id` VARCHAR(128) NOT NULL UNIQUE, `ms_email` VARCHAR(128) NOT NULL UNIQUE, `banned` BOOLEAN NOT NULL DEFAULT FALSE, PRIMARY KEY (`discord_id`) );
