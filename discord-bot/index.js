@@ -20,7 +20,7 @@ client.on('ready', () => {
 
 client.on('message', msg => {
   if (msg.content.toLowerCase() === '!verify') {
-    sql_pool.query('SELECT * FROM discord_users WHERE discord_id = ?', [msg.member.id], (err, res) => {
+    sql_pool.query('SELECT * FROM discord_users WHERE discord_id = MD5(?)', [msg.member.id], (err, res) => {
         if (err) {
             msg.reply('Error connecting to the database!');
             console.error(err);
@@ -46,7 +46,7 @@ client.on('message', msg => {
         msg.reply('Usage: !unlink <discord id>');
       } else {
         const discord_id = msg.content.split(' ')[1];
-        sql_pool.query('SELECT * FROM discord_users WHERE discord_id = ?', [discord_id], (err, res) => {
+        sql_pool.query('SELECT * FROM discord_users WHERE discord_id = MD5(?)', [discord_id], (err, res) => {
             if (err) {
                 msg.reply('Error connecting to the database!');
                 console.error(err);
@@ -54,7 +54,7 @@ client.on('message', msg => {
                 msg.reply('Could not find linked account with discord id ' + discord_id);
             } else {
                 console.log('Unlinking discord account ' + discord_id);
-                sql_pool.query('DELETE FROM discord_users WHERE discord_id = ?', [discord_id], (err, res) => {
+                sql_pool.query('DELETE FROM discord_users WHERE discord_id = MD5(?)', [discord_id], (err, res) => {
                     if (err) {
                         msg.reply('Error connecting to the database!');
                         console.error(err);
@@ -79,7 +79,7 @@ client.on('message', msg => {
       msg.reply('Usage: !verify-ban <discord id>');
     } else {
       const discord_id = msg.content.split(' ')[1];
-      sql_pool.query('SELECT * FROM discord_users WHERE discord_id = ?', [discord_id], (err, res) => {
+      sql_pool.query('SELECT * FROM discord_users WHERE discord_id = MD5(?)', [discord_id], (err, res) => {
           if (err) {
               msg.reply('Error connecting to the database!');
               console.error(err);
@@ -87,7 +87,7 @@ client.on('message', msg => {
               msg.reply('Could not find linked account with discord id ' + discord_id);
           } else {
               console.log('Banning discord account ' + discord_id);
-              sql_pool.query('UPDATE discord_users SET banned = TRUE WHERE discord_id = ?', [discord_id], (err, res) => {
+              sql_pool.query('UPDATE discord_users SET banned = TRUE WHERE discord_id = MD5(?)', [discord_id], (err, res) => {
                   if (err) {
                       msg.reply('Error connecting to the database!');
                       console.error(err);
@@ -112,7 +112,7 @@ client.on('message', msg => {
           msg.reply('Usage: !verify-unban <discord id>');
         } else {
           const discord_id = msg.content.split(' ')[1];
-          sql_pool.query('SELECT * FROM discord_users WHERE discord_id = ?', [discord_id], (err, res) => {
+          sql_pool.query('SELECT * FROM discord_users WHERE discord_id = MD5(?)', [discord_id], (err, res) => {
               if (err) {
                   msg.reply('Error connecting to the database!');
                   console.error(err);
@@ -120,7 +120,7 @@ client.on('message', msg => {
                   msg.reply('Could not find linked account with discord id ' + discord_id);
               } else {
                   console.log('Unbanning discord account ' + discord_id);
-                  sql_pool.query('UPDATE discord_users SET banned = FALSE WHERE discord_id = ?', [discord_id], (err, res) => {
+                  sql_pool.query('UPDATE discord_users SET banned = FALSE WHERE discord_id = MD5(?)', [discord_id], (err, res) => {
                       if (err) {
                           msg.reply('Error connecting to the database!');
                           console.error(err);

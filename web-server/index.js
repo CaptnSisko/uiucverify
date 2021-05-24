@@ -139,7 +139,7 @@ app.get('/link_confirm',
     if(req.session.discord === undefined || req.session.microsoft === undefined) {
       res.send('You must log into Microsoft and Discord before linking accounts! Do you have cookies enabled?')
     } else {
-      sql_pool.query('SELECT * FROM discord_users WHERE discord_id = ? OR ms_id = ? OR ms_email = ?;', [req.session.discord.id, req.session.microsoft.id, req.session.microsoft.mail], (err, data) => {
+      sql_pool.query('SELECT * FROM discord_users WHERE discord_id = MD5(?) OR ms_id = MD5(?) OR ms_email = MD5(?);', [req.session.discord.id, req.session.microsoft.id, req.session.microsoft.mail], (err, data) => {
         if(err) {
           console.log(err);
           res.send('Error connecting to database');
@@ -147,7 +147,7 @@ app.get('/link_confirm',
         if(data[0] !== undefined) {
           res.send(`${data[0]['ms_email']} is already linked to Discord account id ${data[0]['discord_id']}. Please contact an Admin for assistance.`);
         } else {
-          sql_pool.query('INSERT INTO discord_users VALUES (?, ?, ?, FALSE)', [req.session.discord.id, req.session.microsoft.id, req.session.microsoft.mail], (err, data) => {
+          sql_pool.query('INSERT INTO discord_users VALUES (MD5(?), MD5(?), MD5(?), FALSE)', [req.session.discord.id, req.session.microsoft.id, req.session.microsoft.mail], (err, data) => {
             if(err) {
               console.log(err);
               res.send('Error inserting into database');
