@@ -80,6 +80,13 @@ app.get('/privacy',
   }
 );
 
+app.get('/tos', 
+  function(req, res) {
+    res.redirect('https://github.com/CaptnSisko/uiucverify/blob/main/termsofservice.md')
+  }
+);
+
+
 app.get('/fail', 
   function(req, res) {
     res.send('Authentication Error. Please try again.');
