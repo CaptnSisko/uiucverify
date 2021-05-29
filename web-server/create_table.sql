@@ -1,1 +1,9 @@
-CREATE TABLE `discord_users` ( `discord_id` CHAR(36) NOT NULL UNIQUE, `ms_id` CHAR(36) NOT NULL UNIQUE, `ms_email` CHAR(36) NOT NULL UNIQUE, `banned` BOOLEAN NOT NULL DEFAULT FALSE, PRIMARY KEY (`discord_id`) );
+CREATE TABLE `discord_ids` (
+	`discord_id` CHAR(64) NOT NULL,
+	PRIMARY KEY (`discord_id`)
+);
+
+CREATE TABLE `emails` (
+	`email` CHAR(64) NOT NULL,
+	PRIMARY KEY (`email`)
+);

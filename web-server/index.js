@@ -3,6 +3,9 @@ require('dotenv').config();
 const express = require('express');
 const passport = require('passport');
 
+const crypto = require("crypto");
+const bcrypt = require('bcrypt');
+
 const mysql = require('mysql');
 const sql_pool = mysql.createPool({
 	host: process.env.DB_HOST,
@@ -68,6 +71,12 @@ app.set('view engine', 'pug');
 app.get('/', 
   function(req, res) {
     res.sendFile(__dirname + '/static/index.html');
+  }
+);
+
+app.get('/privacy', 
+  function(req, res) {
+    res.redirect('https://github.com/CaptnSisko/uiucverify/blob/main/privacy.md')
   }
 );
 
@@ -137,27 +146,45 @@ app.get('/link',
 app.get('/link_confirm', 
   function(req, res) {
     if(req.session.discord === undefined || req.session.microsoft === undefined) {
-      res.send('You must log into Microsoft and Discord before linking accounts! Do you have cookies enabled?')
+      res.send('You must log into Microsoft and Discord before linking accounts! Do you have cookies enabled?');
     } else {
-      sql_pool.query('SELECT * FROM discord_users WHERE discord_id = MD5(?) OR ms_id = MD5(?) OR ms_email = MD5(?);', [req.session.discord.id, req.session.microsoft.id, req.session.microsoft.mail], (err, data) => {
+      sql_pool.query('SELECT * FROM emails WHERE email = SHA2( MD5(?), 256);', [req.session.microsoft.mail], (err, data) => {
         if(err) {
           console.log(err);
           res.send('Error connecting to database');
         }
         if(data[0] !== undefined) {
-          res.send(`${data[0]['ms_email']} is already linked to Discord account id ${data[0]['discord_id']}. Please contact an Admin for assistance.`);
+          res.send(`${data[0]['email']} is already linked to a Discord account. Please contact an Admin for assistance.`);
         } else {
-          sql_pool.query('INSERT INTO discord_users VALUES (MD5(?), MD5(?), MD5(?), FALSE)', [req.session.discord.id, req.session.microsoft.id, req.session.microsoft.mail], (err, data) => {
+          sql_pool.query('SELECT * FROM discord_ids WHERE discord_id = SHA2( MD5(?), 256);', [req.session.discord.id], (err, data) => {
             if(err) {
               console.log(err);
-              res.send('Error inserting into database');
+              res.send('Error connecting to database');
             }
-            res.send('Your accounts have been linked! You may now close this window.');
+            if(data[0] !== undefined) {
+              res.send(`${data[0]['discord_id']} is already linked to an email. Please contact an Admin for assistance.`);
+            } else {
+    
+              sql_pool.query('INSERT INTO emails VALUES ( SHA2( MD5(?), 256) )', [req.session.microsoft.mail], (err, data) => {
+                if(err) {
+                  console.log(err);
+                  res.send('Error inserting into database');
+                }
+                  sql_pool.query('INSERT INTO discord_ids VALUES ( SHA2( MD5(?), 256) )', [req.session.discord.id], (err, data) => {
+                    if(err) {
+                      console.log(err);
+                      res.send('Error inserting into database');
+                    }
+                      res.send('Your accounts have been linked! You may now close this window.');
+                  });
+              });
+            }
           });
         }
       });
     }
   }
 );
+
 
 app.listen(3000);
