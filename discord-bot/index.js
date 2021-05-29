@@ -20,14 +20,12 @@ client.on('ready', () => {
 
 client.on('message', msg => {
   if (msg.content.toLowerCase() === '!verify') {
-    sql_pool.query('SELECT * FROM discord_users WHERE discord_id = MD5(?)', [msg.member.id], (err, res) => {
+    sql_pool.query('SELECT * FROM discord_ids WHERE discord_id = SHA2( MD5(?), 256)', [msg.member.id], (err, res) => {
         if (err) {
             msg.reply('Error connecting to the database!');
             console.error(err);
         } else if(res[0] === undefined) {
-            msg.reply('Your Discord account is not linked to your UIUC account. Link your account at https://uiucverify.twong.dev');
-        } else if (res[0]['banned']) {
-            msg.reply('Your account is banned from being verified!');
+            msg.reply('Your Discord account is not verified with UIUC account. Verify your account at https://uiucverify.twong.dev');
         } else {
             const verifiedRole = msg.guild.roles.cache.find(role => role.name === 'uiuc-verified');
             if(verifiedRole) {
@@ -39,22 +37,22 @@ client.on('message', msg => {
         }
     });
   }
-  else if (msg.content.toLowerCase().startsWith('!unlink')) {
+  else if (msg.content.toLowerCase().startsWith('!verify-delete-discord')) {
       if(!admins.includes(msg.member.id)) {
         msg.reply('You don\'t have permission to unlink accounts!');
       } else if (msg.content.split(' ').length === 1) {
-        msg.reply('Usage: !unlink <discord id>');
+        msg.reply('Usage: !verify-unlink-discord <discord id>');
       } else {
         const discord_id = msg.content.split(' ')[1];
-        sql_pool.query('SELECT * FROM discord_users WHERE discord_id = MD5(?)', [discord_id], (err, res) => {
+        sql_pool.query('SELECT * FROM discord_ids WHERE discord_id = SHA2( MD5(?), 256)', [discord_id], (err, res) => {
             if (err) {
                 msg.reply('Error connecting to the database!');
                 console.error(err);
             } else if(res[0] === undefined) {
-                msg.reply('Could not find linked account with discord id ' + discord_id);
+                msg.reply('Could not find discord id ' + discord_id);
             } else {
                 console.log('Unlinking discord account ' + discord_id);
-                sql_pool.query('DELETE FROM discord_users WHERE discord_id = MD5(?)', [discord_id], (err, res) => {
+                sql_pool.query('DELETE FROM discord_ids WHERE discord_id = SHA2( MD5(?), 256)', [discord_id], (err, res) => {
                     if (err) {
                         msg.reply('Error connecting to the database!');
                         console.error(err);
@@ -72,72 +70,34 @@ client.on('message', msg => {
         });
       }
   }
-  else if (msg.content.toLowerCase().startsWith('!verify-ban')) {
+  else if (msg.content.toLowerCase().startsWith('!verify-delete-email')) {
     if(!admins.includes(msg.member.id)) {
-      msg.reply('You don\'t have permission to ban accounts!');
+      msg.reply('You don\'t have permission to unlink accounts!');
     } else if (msg.content.split(' ').length === 1) {
-      msg.reply('Usage: !verify-ban <discord id>');
+      msg.reply('Usage: !verify-unlink-email <email>');
     } else {
-      const discord_id = msg.content.split(' ')[1];
-      sql_pool.query('SELECT * FROM discord_users WHERE discord_id = MD5(?)', [discord_id], (err, res) => {
+      const email = msg.content.split(' ')[1].toLowerCase();
+      sql_pool.query('SELECT * FROM emails WHERE email = SHA2( MD5(?), 256)', [email], (err, res) => {
           if (err) {
               msg.reply('Error connecting to the database!');
               console.error(err);
           } else if(res[0] === undefined) {
-              msg.reply('Could not find linked account with discord id ' + discord_id);
+              msg.reply('Could not find email');
           } else {
-              console.log('Banning discord account ' + discord_id);
-              sql_pool.query('UPDATE discord_users SET banned = TRUE WHERE discord_id = MD5(?)', [discord_id], (err, res) => {
+              console.log('Unlinking discord account ' + email);
+              sql_pool.query('DELETE FROM emails WHERE email = SHA2( MD5(?), 256)', [email], (err, res) => {
                   if (err) {
                       msg.reply('Error connecting to the database!');
                       console.error(err);
                   } else {
-                      client.guilds.cache.forEach(guild => {
-                          guild.members.fetch(discord_id).then((member) => {
-                              const verifiedRole = guild.roles.cache.find(role => role.name === 'uiuc-verified');
-                              if(verifiedRole) member.roles.remove(verifiedRole);
-                          }).catch(console.log);
-                          msg.reply('Successfully banned Discord user ' + discord_id);
-                      });
+                    msg.reply('Successfully deleted email');
                   }
               });
           }
       });
     }
-    }
-    else if (msg.content.toLowerCase().startsWith('!verify-unban')) {
-        if(!admins.includes(msg.member.id)) {
-          msg.reply('You don\'t have permission to unban accounts!');
-        } else if (msg.content.split(' ').length === 1) {
-          msg.reply('Usage: !verify-unban <discord id>');
-        } else {
-          const discord_id = msg.content.split(' ')[1];
-          sql_pool.query('SELECT * FROM discord_users WHERE discord_id = MD5(?)', [discord_id], (err, res) => {
-              if (err) {
-                  msg.reply('Error connecting to the database!');
-                  console.error(err);
-              } else if(res[0] === undefined) {
-                  msg.reply('Could not find linked account with discord id ' + discord_id);
-              } else {
-                  console.log('Unbanning discord account ' + discord_id);
-                  sql_pool.query('UPDATE discord_users SET banned = FALSE WHERE discord_id = MD5(?)', [discord_id], (err, res) => {
-                      if (err) {
-                          msg.reply('Error connecting to the database!');
-                          console.error(err);
-                      } else {
-                          client.guilds.cache.forEach(guild => {
-                              guild.members.fetch(discord_id).then((member) => {
-                                  const verifiedRole = guild.roles.cache.find(role => role.name === 'uiuc-verified');
-                                  if(verifiedRole) member.roles.remove(verifiedRole);
-                              }).catch(console.log);
-                              msg.reply('Successfully unbanned Discord user ' + discord_id);
-                          });
-                      }
-                  });
-              }
-          });
-        }
-    }
+}
+
     else if (msg.content.toLowerCase().startsWith('!verify-instructions')) {
         msg.delete().then().catch(console.error);
         let embed = new MessageEmbed()
@@ -151,8 +111,8 @@ client.on('message', msg => {
              .setFooter('UIUC-Verify written by Captain_Sisko');
         
         embed.addField('How to verify your UIUC account for the first time',
-        '1) Visit https://uiucverify.twong.dev/\n\
-        2) Follow the directions on the website to log into Microsoft and Discord so the bot can link your accounts\n\
+        '1) Visit https://uiucverify.twong.dev\n\
+        2) Follow the directions on the website to log into Microsoft and Discord so the bot can hash and remember your accounts\n\
         3) Run `!verify` in a channel @UIUC-Verify can see', false);
         
         embed.addField('How to get verified after your first time',
@@ -160,9 +120,14 @@ client.on('message', msg => {
         false);
 
         embed.addField('Rules',
-        '1) You may only link one Discord account to your Netid. The bot enforces this 1:1 relation.\n\
-        2) Netid <-> Discord links are permanent. If you lose access to your Discord account and need to have it unlinked, contact a maintainer for assistance\n\
-        3) Threats, hate speech, or other egregious rule violations may result in a permanent ban from verifying your account',
+        '1) You may only verify one Discord account with your Netid. The bot stores hashed netids so you can\'t use the same one twice.\n\
+        2) Netid <-> Discord verifications are permanent. If you lose access to your Discord account and need a new one linked, contact a maintainer for assistance\n\
+        3) Please be kind to your fellow UIUC Students',
+        false);
+
+        embed.addField('Privacy',
+        'This bot stores securely hashed discord ids and securely hashed net ids with no linking between them; in other words, the bot doesn\'t know\
+        which discord account belongs to which student, and a hacker could not gain any identifiable information. Read more at https://github.com/CaptnSisko/uiucverify/blob/main/privacy.md',
         false);
 
         msg.channel.send(embed);
