@@ -11,14 +11,21 @@ const sql_pool = mysql.createPool({
 	database: process.env.DB_NAME
 });
 
-const { Client, MessageEmbed } = require('discord.js');
-const client = new Client();
+const { Client, EmbedBuilder, GatewayIntentBits } = require('discord.js');
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
+  ]
+});
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-client.on('message', msg => {
+client.on('messageCreate', msg => {
   if (msg.content.toLowerCase() === '!verify') {
     sql_pool.query('SELECT * FROM discord_ids WHERE discord_id = SHA2( MD5(?), 256)', [msg.member.id], (err, res) => {
         if (err) {
@@ -100,7 +107,7 @@ client.on('message', msg => {
 
     else if (msg.content.toLowerCase().startsWith('!verify-instructions')) {
         msg.delete().then().catch(console.error);
-        let embed = new MessageEmbed()
+        let embed = new EmbedBuilder()
             .setTitle('What is UIUC-Verify?')
             .setColor(0xE84A27)
             .setDescription('UIUC-Verify is an open-source bot that verifies Discord accounts belong\
@@ -130,7 +137,7 @@ client.on('message', msg => {
         which discord account belongs to which student, and a hacker could not gain any identifiable information. Read more at https://github.com/CaptnSisko/uiucverify/blob/main/privacy.md',
         false);
 
-        msg.channel.send(embed);
+        msg.channel.send({ embeds: [embed] });
     }        
 });
 
