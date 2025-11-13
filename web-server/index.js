@@ -95,20 +95,27 @@ app.get('/fail',
 
 app.get('/step1', passport.authenticate('microsoft'));
 
-app.get('/callback/microsoft', 
+app.get('/callback/microsoft',
   passport.authenticate('microsoft', { failureRedirect: '/fail' }),
   function(req, res) {
     // save the email from microsoft
     req.session.microsoft = req.user._json;
     // res.send(req.session);
 
-    res.redirect('/step2');
+    // Explicitly save session before redirecting (required for Passport 0.6.0+)
+    req.session.save(function(err) {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.redirect('/fail');
+      }
+      res.redirect('/step2');
+    });
   }
 );
 
 app.get('/step2', passport.authenticate('discord'));
 
-app.get('/callback/discord', 
+app.get('/callback/discord',
   passport.authenticate('discord', { failureRedirect: '/fail' }),
   function(req, res) {
     if(req.session.microsoft === undefined) {
@@ -116,7 +123,14 @@ app.get('/callback/discord',
     } else {
       req.session.discord = req.user;
 
-      res.redirect('/link');
+      // Explicitly save session before redirecting (required for Passport 0.6.0+)
+      req.session.save(function(err) {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.redirect('/fail');
+        }
+        res.redirect('/link');
+      });
     }
   }
 );
@@ -157,15 +171,15 @@ app.get('/link_confirm',
     } else {
       sql_pool.query('SELECT * FROM emails WHERE email = SHA2( MD5(?), 256);', [req.session.microsoft.mail], (err, data) => {
         if(err) {
-          console.log(err);
+          console.error(err);
           res.send('Error connecting to database');
         }
         if(data[0] !== undefined) {
-          res.send(`${data[0]['email']} is already linked to a Discord account. Please contact an Admin for assistance.`);
+          res.send('This email is already linked to a Discord account. Please contact an Admin for assistance.');
         } else {
           sql_pool.query('SELECT * FROM discord_ids WHERE discord_id = SHA2( MD5(?), 256);', [req.session.discord.id], (err, data) => {
             if(err) {
-              console.log(err);
+              console.error(err);
               res.send('Error connecting to database');
             }
             if(data[0] !== undefined) {
@@ -174,12 +188,12 @@ app.get('/link_confirm',
     
               sql_pool.query('INSERT INTO emails VALUES ( SHA2( MD5(?), 256) )', [req.session.microsoft.mail], (err, data) => {
                 if(err) {
-                  console.log(err);
+                  console.error(err);
                   res.send('Error inserting into database');
                 }
                   sql_pool.query('INSERT INTO discord_ids VALUES ( SHA2( MD5(?), 256) )', [req.session.discord.id], (err, data) => {
                     if(err) {
-                      console.log(err);
+                      console.error(err);
                       res.send('Error inserting into database');
                     }
                       res.send('Your accounts have been linked! You may now close this window.');
