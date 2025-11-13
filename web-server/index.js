@@ -113,10 +113,10 @@ app.get('/callback/microsoft',
   }
 );
 
-app.get('/step2', passport.authenticate('discord'));
+app.get('/step2', passport.authenticate('discord', { session: false }));
 
 app.get('/callback/discord',
-  passport.authenticate('discord', { failureRedirect: '/fail' }),
+  passport.authenticate('discord', { failureRedirect: '/fail', session: false }),
   function(req, res) {
     if(req.session.microsoft === undefined) {
       res.send('You must log into Microsoft before logging into Discord! Do you have cookies enabled?')
